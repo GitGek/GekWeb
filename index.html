@@ -1,128 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Happy Birthday Ivan</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Typer</title>
   <style>
     body {
+      background-color: #ffffff;
+      color: #111;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
       margin: 0;
       padding: 0;
-      background: black;
-      color: yellow;
-      font-family: 'Arial Black', sans-serif;
       overflow: hidden;
-      height: 100vh;
     }
-
-    .starfield {
+    h1 {
+      color: #3364E0;
       position: absolute;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at center, #111 0%, #000 100%);
-      z-index: 0;
-    }
-
-    .crawl-container {
-      position: relative;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      perspective: 1000px;
-      z-index: 1;
-    }
-
-    .crawl {
-      position: absolute;
-      bottom: -150%;
-      width: 70vw;
-      margin: 0 auto;
-      left: 0;
-      right: 0;
-      transform-origin: 50% 100%;
-      transform: rotateX(35deg);
-      animation: crawl 70s linear forwards;
-      font-size: 2.5rem;
-      text-align: justify;
-      opacity: 1;
-    }
-
-    @keyframes crawl {
-      0% {
-        bottom: -150%;
-        transform: rotateX(35deg) translateZ(0);
-        opacity: 1;
-      }
-      100% {
-        bottom: 250%;
-        transform: rotateX(35deg) translateZ(-4000px);
-        opacity: 1;
-      }
-    }
-
-    #forceButton {
-      position: fixed;
-      bottom: 20px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      padding: 1rem 2rem;
-      font-size: 1.5rem;
-      background: black;
-      color: yellow;
-      border: 2px solid yellow;
-      border-radius: 8px;
-      font-weight: bold;
-      z-index: 2;
-      cursor: pointer;
+      font-size: 1.8rem;
+      z-index: 10;
     }
-
-    .firework {
+    #game {
       position: absolute;
-      width: 6px;
-      height: 6px;
-      background: red;
-      image-rendering: pixelated;
-      animation: explode 1s ease-out forwards;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #f8faff;
+      overflow: hidden;
+      z-index: 1;
     }
-
-    @keyframes explode {
-      to {
-        transform: scale(5);
-        opacity: 0;
-      }
+    .token {
+      position: absolute;
+      font-size: 1.5rem;
+      color: #3364E0;
+    }
+    #inputArea {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: 1rem 0;
+      background-color: #ffffff;
+      z-index: 10;
+    }
+    input[type="text"] {
+      padding: 0.5rem;
+      font-size: 1.2rem;
+      border: 2px solid #3364E0;
+      width: 90%;
+      max-width: 700px;
+    }
+    #score {
+      margin-top: 0.5rem;
+      font-size: 1.2rem;
+    }
+    #feedback {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    #winMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: #3364E0;
+      z-index: 15;
+      display: none;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="starfield"></div>
-  <div class="crawl-container">
-    <div class="crawl" id="crawlText">
-      <p>A long time ago in a server rack far, far away…</p>
-      <p><strong>Episode IV: THE COMPUTEBLADE AWAKENS</strong></p>
-      <p>It is a time of innovation. Rebel engineers, striking from their hidden labs, have won their first victory against the boring status quo.</p>
-      <p>During the battle, Master Ivan, fearless founder of Uptime Industries and father of ComputeBlade, unveiled the Lemony Enclosure — a device of such elegance, it left even the Empire’s thermal engineers speechless.</p>
-      <p>Leading the PCB rebellion, Ivan inspired a generation with projects that defied convention, broke expectations, and pulsed with creative energy.</p>
-      <p>Today we celebrate the birth of a legend. The Force, the Firmware, and the Frontend salute him.</p>
-      <p>May your systems be stable, your packets swift, and your circuits forever unburned.</p>
-      <p><strong>Happy Birthday, Ivan — and may the source be with you!</strong></p>
-    </div>
+  <h1>Day in the Life of a Prompt Engineer</h1>
+  <div id="game"></div>
+  <div id="inputArea">
+    <input type="text" id="input" placeholder="Type token here" autofocus>
+    <div id="score">Score: 0 / 10</div>
+    <div id="feedback"></div>
   </div>
-  <button id="forceButton">May the Force Be With You, Ivan</button>
+  <div id="winMessage">🎉 Now you know 🎉</div>
 
   <script>
-    const colors = ['#ff0044', '#00eaff', '#ffe100', '#00ff57', '#ff00ea'];
+    const game = document.getElementById('game');
+    const input = document.getElementById('input');
+    const scoreDisplay = document.getElementById('score');
+    const feedback = document.getElementById('feedback');
+    const winMessage = document.getElementById('winMessage');
+    let score = 0;
+    let tokens = [];
+    let tokenId = 0;
+    let gameActive = true;
+    const tokenWords = [
+      "prompt", "token", "model", "LLM", "embed", "query", "context",
+      "output", "input", "fine-tune", "attention", "transformer", "latent",
+      "inference", "beam", "decoder"
+    ];
 
-    document.getElementById('forceButton').addEventListener('click', () => {
-      setInterval(() => {
-        const f = document.createElement('div');
-        f.classList.add('firework');
-        f.style.left = Math.random() * window.innerWidth + 'px';
-        f.style.top = Math.random() * window.innerHeight + 'px';
-        f.style.background = colors[Math.floor(Math.random() * colors.length)];
-        document.body.appendChild(f);
-        setTimeout(() => f.remove(), 1000);
-      }, 150);
-    });
+    function spawnToken() {
+      if (!gameActive) return;
+      const tokenText = tokenWords[Math.floor(Math.random() * tokenWords.length)];
+      const token = document.createElement('div');
+      const id = `token-${tokenId++}`;
+      token.className = 'token';
+      token.textContent = tokenText;
+      token.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
+      token.style.top = '0px';
+      token.id = id;
+      game.appendChild(token);
+      tokens.push({ id, text: tokenText, y: 0 });
+    }
+
+    function moveTokens() {
+      tokens.forEach((t, index) => {
+        t.y += 2;
+        const el = document.getElementById(t.id);
+        if (el) el.style.top = `${t.y}px`;
+        if (t.y > window.innerHeight - 100) {
+          removeToken(t.id);
+        }
+      });
+    }
+
+    function removeToken(id) {
+      const el = document.getElementById(id);
+      if (el) game.removeChild(el);
+      tokens = tokens.filter(t => t.id !== id);
+    }
+
+    function checkInput() {
+      if (!gameActive) return;
+      const val = input.value.trim();
+      const match = tokens.find(t => t.text === val);
+      if (match) {
+        score++;
+        scoreDisplay.textContent = `Score: ${score} / 10`;
+        feedback.textContent = `✔️ Matched: ${val}`;
+        removeToken(match.id);
+        input.value = '';
+        if (score >= 10) {
+          endGame();
+        }
+      } else {
+        feedback.textContent = '';
+      }
+    }
+
+    function endGame() {
+      gameActive = false;
+      feedback.textContent = '';
+      winMessage.style.display = 'block';
+    }
+
+    input.addEventListener('input', checkInput);
+    setInterval(spawnToken, 1500);
+    setInterval(moveTokens, 100);
   </script>
 </body>
 </html>
